@@ -1,0 +1,4 @@
+useDynLib(route)
+import(methods, Rcpp)
+importFrom(Rcpp, evalCpp)
+exportPattern("^[[:alpha:]]+")

@@ -1,0 +1,20 @@
+Package: route
+Type: Package
+Title: Create shortest route from a start to an end visit several stops
+    in between using TSP.
+Version: 0.1.0
+Author: Guang Yang
+Maintainer: Guang Yang <gyang274@gmail.com>
+Description:  Create shortest route from a start to an end visit several
+    stops in between using TSP.
+License: file LICENSE
+LazyData: TRUE
+Encoding: UTF-8
+Depends: data.table, magrittr,
+    ggmap, TSP, Rcpp (>= 0.12.5), leaflet
+URL: http://github.com/gyang274/route
+BugReports: http://github.com/gyang274/route/issues
+RoxygenNote: 5.0.1
+Imports: dplyr
+LinkingTo: Rcpp
+SystemRequirements: GNU make
