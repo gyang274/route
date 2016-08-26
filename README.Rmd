@@ -22,7 +22,7 @@ __route__: create shortest route from a start to an end visit several stops in b
 
 In following development, package __route__ also includes a series of functions for event handling in employee delivery program. 
 
-## This is best illustrated in the animation and working site:
+This is best illustrated in the animation and working site:
 
 + An Animation View:
 

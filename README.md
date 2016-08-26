@@ -10,7 +10,6 @@ The Employee Delivery Program
 In following development, package **route** also includes a series of functions for event handling in employee delivery program.
 
 This is best illustrated in the animation and working site:
------------------------------------------------------------
 
 -   An Animation View:
 
