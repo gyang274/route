@@ -7,7 +7,10 @@
 rp_create_pkgs_rk_home_sdrqst(pkgs_id, ns_rqst = 2L)
 }
 \value{
-status code: 0L ok!, 1L request has been sent to all home_id in this offc_id.
+status code:
+ 0L ok!,
+ 1L request has been sent to all home_id in this offc_id,
+ 2L package delivery request has been accepted or delivered.
 }
 \description{
 create pkgs a ranked home_idlist and send deliver request to top ns_rqst

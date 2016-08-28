@@ -518,7 +518,7 @@ rp_create_offc_rt_home_single_vs <- function(
   #- overwrite offc and home (local) id as 0L focuse on pkgs id order
   lk_dt <- rbind(
     offc[id == offc_id, .(id = 0L, vd)],
-    pkgs[id %in% pkgs_id, .(id, vd)],
+    if(!is.null(pkgs)) pkgs[id %in% pkgs_id, .(id, vd)],
     home[id == home_id, .(id = 0L, vd)]
   )
 
@@ -567,10 +567,17 @@ rp_create_offc_rt_home_single_vs <- function(
 #' create pkgs a ranked home_idlist and send deliver request to top ns_rqst
 #'  unsent home_id, using rp_create_pkgs_rk_home_idlist()
 #' @return
-#' status code: 0L ok!, 1L request has been sent to all home_id in this offc_id.
+#' status code:
+#'  0L ok!,
+#'  1L request has been sent to all home_id in this offc_id,
+#'  2L package delivery request has been accepted or delivered.
 rp_create_pkgs_rk_home_sdrqst <- function(pkgs_id, ns_rqst = 2L) {
 
   a_pkgs <- pkgs[id == pkgs_id]
+
+  ## check pkgs status must be 0L open ok for sending request
+  ## otherwise, 1L accepted or 2L delivered - no request sent
+  if (a_pkgs[["sid"]] != 0L) return(2L)
 
   ## all employee registered in the same office
   lk_home <- home[fid == a_pkgs[["fid"]]]

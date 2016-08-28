@@ -57,6 +57,8 @@ mp_create_offc_marker <- function(offc_id = NULL) {
 
   if (is.null(offc_id)) offc_id <- offc[["id"]]
 
+  if (is.null(offc_id)) return(NULL)
+
   iJet <- grepl("Jet", offc[id %in% offc_id, nm], ignore.case = TRUE)
 
   dfmk <- offc %>%
@@ -108,6 +110,8 @@ mp_create_home_marker <- function(home_id) {
 
   if (is.null(home_id)) home_id <- home[["id"]]
 
+  if (is.null(home_id)) return(NULL)
+
   dfmk <- home %>%
     subset(
       id %in% home_id
@@ -156,6 +160,8 @@ mp_create_home_marker <- function(home_id) {
 mp_create_pkgs_marker <- function(pkgs_id) {
 
   if (is.null(pkgs_id)) pkgs_id <- pkgs[["id"]]
+
+  if (is.null(pkgs_id)) return(NULL)
 
   iJet <- grepl("Jet", offc[match(pkgs[id %in% pkgs_id, fid], id), nm], ignore.case = TRUE)
 
@@ -207,6 +213,8 @@ mp_create_pkgs_marker <- function(pkgs_id) {
 #' use mp_create_offc_marker, mp_create_home_marker, mp_create_pkgs_marker
 mp_add_marker_on_maps <- function(mm, dfmk) {
 
+  if (is.null(dfmk)) return(mm)
+
   mm %>%
     addMarkers(
       lat = dfmk[["lat"]],
@@ -223,6 +231,8 @@ mp_add_marker_on_maps <- function(mm, dfmk) {
 #' map operation add popup in dfmk onto map rgmp
 #' use mp_create_offc_marker, mp_create_home_marker, mp_create_pkgs_marker
 mp_add_popup_on_maps <- function(mm, dfmk) {
+
+  if (is.null(dfmk)) return(mm)
 
   mm %>%
     addPopups(
@@ -943,23 +953,23 @@ mp_create_ctbl_home_id <- function(home_id) {
 
   lid_list <- setdiff(tb0[["lid"]], 0L)
 
-  if ( length(lid_list) > 0L ) {
-
-    lid_name_list <- paste0("Package-", lid_list)
-
-  } else {
-
-    lid_name_list <- NULL
-
-  }
-
   tb0 <- tb0[ , .(
-    from = c("Office", lid_name_list),
-    to = c(lid_name_list, "Home"),
+    fid = c(0L, lid_list),
+    tid = c(lid_list, 0L),
     miles, minutes, turns
   )]
 
   tb0DT <- tb0 %>%
+    dplyr::mutate(
+      from = ifelse(fid == 0L, "Office", paste0("Package-", fid)),
+      to = ifelse(tid == 0L, "Home", paste0("Package-", tid))
+    ) %>%
+    dplyr::select(
+      -fid, -tid
+    ) %>%
+    data.table::setcolorder(
+      c("from", "to", "miles", "minutes", "turns")
+    ) %>%
     # dplyr::mutate(
     #   colname = enc2utf8(colname)
     # ) %>%
@@ -1083,10 +1093,14 @@ mp_create_cgmp_home_id <- function(home_id, zoom = 12L) {
 
   a_home <- home[id == home_id]
 
+  a_home_pkgs_id <- c(a_home[["aid"]][[1L]], a_home[["pid"]][[1L]])
+
+  if (is.null(a_home_pkgs_id)) a_home_pkgs_id <- 0L # NULL would create a cgmp with all pkgs_id
+
   cgmp <- mp_create_rgmp_from_db(
     offc_id = a_home[["fid"]],
     home_id = home_id,
-    pkgs_id = c(a_home[["aid"]][[1L]], a_home[["pid"]][[1L]])
+    pkgs_id = a_home_pkgs_id
   ) %>%
     leaflet::setView(
       lat = a_home[["lat"]],
@@ -1165,7 +1179,7 @@ mp_create_cswb_ctbl_home_id <- function(
     ygdashboard::chatMessage(
       name = "Scarlet Witch",
       image = "img/scarlet_witch.jpg",
-      text = paste0("Hi, ", home[id == home_id, paste0(fn, " ", ln)], "! Welcome to Employee Delivery Program. I am Scarlet Witch, and I will work with you on some delivery today!"),
+      text = paste0("Hi, ", home[id == home_id, paste0(fn, " ", ln)], "! Welcome to the Employee Delivery Program. I am Scarlet Witch, and I will work with you on making some delivery today!"),
       position = "left",
       timestamp = Sys.time()
     ),
@@ -1180,11 +1194,7 @@ mp_create_cswb_ctbl_home_id <- function(
 
     ),
 
-    br(),
-
     DT::dataTableOutput(outputId = outputId_tb0DT),
-
-    br(),
 
     tags$div(
 
@@ -1214,11 +1224,7 @@ mp_create_cswb_ctbl_home_id <- function(
 
     ),
 
-    br(),
-
     DT::dataTableOutput(outputId = outputId_tb1DT),
-
-    br(),
 
     fluidRow(
 
@@ -1265,7 +1271,6 @@ mp_create_cswb_ctbl_home_id <- function(
     )
 
   )
-
 
 }
 
@@ -1345,6 +1350,150 @@ mp_create_cswb_view_home_id <- function(
   output[[outputId_cgmp]] <- leaflet::renderLeaflet({ lk_cgmp })
 
   return( c(lk_ctbl, cgmp = list(lk_cgmp)) )
+
+}
+
+#' mp_create_cswb_view_home_id_static
+#' @description
+#' map operation:
+#'  create static client view into output - plain html tagList
+#'    1 ctbl view socialWidget(tb0DT + tb1DT) - fulfilled with tb0DT, tb1DT
+#'    2 cgmp view socialWidget(cgmp) fufilled with cgmp
+#' @return
+#'  a static view
+#' @note
+#'  this is designed to be used to create carouselItem in carousel overview
+mp_create_cswb_view_home_id_static <- function(home_id) {
+
+  #- client socialWidget
+  cswb <- mp_create_cswb_home_id(home_id = home_id)
+
+  #- client ctbl
+  lk_ctbl <- mp_create_ctbl_home_id(home_id = home_id)
+
+  lk_ctbl[["tb0DT"]][["width"]] = "100%"
+
+  lk_ctbl[["tb0DT"]][["height"]] =  "180px"
+
+  lk_ctbl[["tb1DT"]][["width"]] = "100%"
+
+  lk_ctbl[["tb1DT"]][["height"]] =  "360px"
+
+  #- client cgmp
+  lk_cgmp <- mp_create_cgmp_home_id(home_id = home_id)
+
+  lk_cgmp[["width"]] = "100%"
+
+  lk_cgmp[["height"]] = "800px"
+
+  #- client view (static)
+  shiny::fluidRow(
+
+    cswb(
+
+      width = 4L,
+
+      ygdashboard::chatMessage(
+        name = "Scarlet Witch",
+        image = "img/scarlet_witch.jpg",
+        text = paste0("Hi, ", home[id == home_id, paste0(fn, " ", ln)], "! Welcome to the Employee Delivery Program. I am Scarlet Witch, and I will work with you on making some delivery today!"),
+        position = "left",
+        timestamp = Sys.time()
+      ),
+
+      br(),
+
+      tags$div(
+
+        align = "center",
+
+        style="width:100%; height:200px;",
+
+        h4("Current Route to Home"),
+
+        lk_ctbl[["tb0DT"]],
+
+        actionButton(
+
+          inputId = paste0("ctb0_dl_hm", home_id), label = HTML("&nbsp;&nbsp;All Delivered!"), width = '85%',
+
+          icon = icon("truck fa-lg"), class = "btn-primary", style = "margin-left: 18px; margin-right: 18px;"
+
+        )
+
+      ),
+
+      br(),
+
+      hr(),
+
+      br(),
+
+      tags$div(
+
+        align = "center",
+
+        style="width:100%; height:400px;",
+
+        h4("Route to Home with Package Requested for Devliery"),
+
+        lk_ctbl[["tb1DT"]],
+
+        fluidRow(
+
+          column(
+
+            width = 6L,
+
+            tags$div(
+
+              align = "center",
+
+              actionButton(
+
+                inputId = paste0("ctb1_dk_hm", home_id), label = HTML("&nbsp;&nbsp;Decline"), width = '85%',
+
+                icon = icon("times fa-lg"), class = "btn-primary", style = "margin-left: 18px; margin-right: 18px;"
+
+              )
+
+            )
+
+          ),
+
+          column(
+
+            width = 6L,
+
+            tags$div(
+
+              align = "center",
+
+              actionButton(
+
+                inputId = paste0("ctb1_ak_hm", home_id), label = HTML("&nbsp;&nbsp;I Would Love to Deliver It!"), width = '85%',
+
+                icon = icon("check fa-lg"), class = "btn-primary", style = "margin-left: 18px; margin-right: 18px;"
+
+              )
+
+            )
+
+          )
+
+        )
+
+      )
+
+    ),
+
+    cswb(
+
+      width = 8L, lk_cgmp
+
+    )
+
+  )
 
 }
 
