@@ -8,6 +8,7 @@
 ^NEWS-.*\.png$
 anm/
 app/
+asm/
 doc/
 mat/
 wfx/
