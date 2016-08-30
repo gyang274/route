@@ -5,7 +5,7 @@ Title: Create shortest route from a start to an end visit several stops
 Version: 0.1.0
 Author: Guang Yang
 Maintainer: Guang Yang <gyang274@gmail.com>
-Description:  Create shortest route from a start to an end visit several
+Description: Create shortest route from a start to an end visit several
     stops in between using TSP.
 License: file LICENSE
 LazyData: TRUE
